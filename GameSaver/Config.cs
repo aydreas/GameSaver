@@ -27,9 +27,9 @@ namespace GameSaver
             return JsonConvert.DeserializeObject<Config>(File.ReadAllText(file));
         }
 
-        public void Save()
+        public void Save(string file)
         {
-            throw new NotImplementedException();
+            File.WriteAllText(file, ToString());
         }
 
         public override string ToString()

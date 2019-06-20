@@ -11,23 +11,14 @@ namespace GameSaver
     {
         public class Path
         {
-            public enum PathType
-            {
-                ANY,
-                FILE,
-                DIRECTORY
-            }
-
-            public Path(string source, string destination, PathType type)
+            public Path(string source, string destination)
             {
                 Source = source;
                 Destination = destination;
-                Type = type;
             }
 
             public string Source { get; set; }
             public string Destination { get; set; }
-            public PathType Type { get; set; }
         }
 
         public class Process
@@ -69,23 +60,60 @@ namespace GameSaver
         protected static long ToUnix(DateTime dateTime) => (long)dateTime.Subtract(new DateTime(1970, 1, 1)).TotalSeconds + 1;
         protected static DateTime FromUnix(long unixTime) => new DateTime(1970, 1, 1).AddSeconds(unixTime);
 
-        public bool HasChanged()
+        public bool CheckValidity()
         {
-            foreach(Path path in Paths)
+            foreach (Path path in Paths)
             {
-                switch(path.Type)
+                if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
+                    return false;
+                else if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
+                    return false;
+            }
+
+            return true;
+        }
+
+        public string[] GetChangedFiles()
+        {
+            List<string> changedFiles = new List<string>();
+
+            foreach (Path path in Paths)
+            {
+                if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
                 {
-                    case Path.PathType.DIRECTORY:
-                        if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
-                            return true;
-                        break;
-                    case Path.PathType.FILE:
-                        if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
-                            return true;
-                        break;
+                    changedFiles.AddRange(GetChangedFiles(path.Source));
+                }
+                else if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
+                {
+                    changedFiles.Add(path.Source);
                 }
             }
 
+            return changedFiles.ToArray();
+        }
+
+        protected string[] GetChangedFiles(string path)
+        {
+            List<string> changedFiles = new List<string>();
+
+            foreach (string dir in Directory.GetDirectories(path))
+            {
+                changedFiles.AddRange(GetChangedFiles(dir));
+            }
+
+            foreach (string file in Directory.GetFiles(path))
+            {
+                changedFiles.Add(file);
+            }
+
+            return changedFiles.ToArray();
+        }
+
+        public bool GetProcessState()
+        {
+
+            if (System.Diagnostics.Process.GetProcessesByName(AssociatedProcess.ProcessName).Length > 0)
+                return true;
             return false;
         }
     }
