@@ -10,7 +10,8 @@ namespace GameSaver
 {
     class Config
     {
-        public ICollection<Location> Locations;
+        public ICollection<Location> Locations { get; set; }
+        public int RefreshInterval { get; set; }
 
         public Config()
         {
@@ -20,6 +21,11 @@ namespace GameSaver
         public Config(ICollection<Location> locations)
         {
             Locations = locations ?? throw new ArgumentNullException(nameof(locations));
+        }
+
+        public Config(ICollection<Location> locations, int refreshInterval) : this(locations)
+        {
+            RefreshInterval = refreshInterval;
         }
 
         public static Config Load(string file)
