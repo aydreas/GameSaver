@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace GameSaver
@@ -13,14 +14,16 @@ namespace GameSaver
 
         public class Path
         {
-            public Path(string source, string destination)
+            public Path(string source, string destination, string regEx)
             {
                 Source = source;
                 Destination = destination;
+                RegEx = regEx;
             }
 
             public string Source { get; set; }
             public string Destination { get; set; }
+            public string RegEx { get; set; }
         }
 
         public class Process
@@ -38,26 +41,13 @@ namespace GameSaver
         public Process AssociatedProcess { get; set; }
         public DateTime? LastUpdated { get => _lastUpdated; set => _lastUpdated = value ?? new DateTime(); }
 
-        public bool CheckValidity()
-        {
-            foreach (Path path in Paths)
-            {
-                if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > LastUpdated)
-                    return false;
-                else if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > LastUpdated)
-                    return false;
-            }
-
-            return true;
-        }
-
         public Path[] GetChangedFiles()
         {
             List<Path> changedFiles = new List<Path>();
 
             foreach (Path path in Paths)
             {
-                if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > LastUpdated)
+                if (Directory.Exists(path.Source))
                 {
                     path.Source = AddDirectorySeperator(path.Source);
                     path.Destination = AddDirectorySeperator(path.Destination);
@@ -65,7 +55,8 @@ namespace GameSaver
                 }
                 else if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > LastUpdated)
                 {
-                    changedFiles.Add(path);
+                    if(path.RegEx == null || Regex.IsMatch(System.IO.Path.GetFileName(path.Source), path.RegEx))
+                        changedFiles.Add(path);
                 }
             }
 
@@ -78,12 +69,13 @@ namespace GameSaver
 
             foreach (string dir in Directory.GetDirectories(path.Source))
             {
-                changedFiles.AddRange(GetChangedFiles(new Path(AddDirectorySeperator(dir), path.Destination + GetRelativePath(path.Source, AddDirectorySeperator(dir)))));
+                changedFiles.AddRange(GetChangedFiles(new Path(AddDirectorySeperator(dir), path.Destination + GetRelativePath(path.Source, AddDirectorySeperator(dir)), path.RegEx)));
             }
 
             foreach (string file in Directory.GetFiles(path.Source))
             {
-                changedFiles.Add(new Path(file, path.Destination + GetRelativePath(path.Source, file)));
+                if ((path.RegEx == null || Regex.IsMatch(System.IO.Path.GetFileName(file), path.RegEx)) && File.GetLastWriteTimeUtc(file) > LastUpdated)
+                    changedFiles.Add(new Path(file, path.Destination + GetRelativePath(path.Source, file), path.RegEx));
             }
 
             return changedFiles.ToArray();

@@ -19,7 +19,7 @@ namespace GameSaver
                 bool updated = false;
                 foreach(Location l in c.Locations)
                 {
-                    if (l.GetProcessState() || l.CheckValidity())
+                    if (l.GetProcessState())
                         continue;
 
                     Location.Path[] changedFiles = l.GetChangedFiles();
