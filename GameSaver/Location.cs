@@ -9,6 +9,8 @@ namespace GameSaver
 {
     class Location
     {
+        private DateTime _lastUpdated;
+
         public class Path
         {
             public Path(string source, string destination)
@@ -31,42 +33,18 @@ namespace GameSaver
             public string ProcessName { get; set; }
         }
 
-        private long _LastUpdated;
-        private DateTime _DateTime_LastUpdated;
-
-        protected DateTime DateTime_LastUpdated
-        {
-            get => _DateTime_LastUpdated;
-            set
-            {
-                _DateTime_LastUpdated = value;
-                _LastUpdated = ToUnix(value);
-            }
-        }
-
         public string Name { get; set; }
         public ICollection<Path> Paths { get; set; }
         public Process AssociatedProcess { get; set; }
-        public long LastUpdated
-        {
-            get => _LastUpdated;
-            set
-            {
-                _LastUpdated = value;
-                _DateTime_LastUpdated = FromUnix(value);
-            }
-        }
-
-        protected static long ToUnix(DateTime dateTime) => (long)dateTime.Subtract(new DateTime(1970, 1, 1)).TotalSeconds + 1;
-        protected static DateTime FromUnix(long unixTime) => new DateTime(1970, 1, 1).AddSeconds(unixTime);
+        public DateTime? LastUpdated { get => _lastUpdated; set => _lastUpdated = value ?? new DateTime(); }
 
         public bool CheckValidity()
         {
             foreach (Path path in Paths)
             {
-                if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
+                if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > LastUpdated)
                     return false;
-                else if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
+                else if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > LastUpdated)
                     return false;
             }
 
@@ -79,15 +57,13 @@ namespace GameSaver
 
             foreach (Path path in Paths)
             {
-                if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
+                if (Directory.Exists(path.Source) && Directory.GetLastWriteTimeUtc(path.Source) > LastUpdated)
                 {
-                    if (!path.Destination.ElementAt(path.Destination.Length - 1).Equals(System.IO.Path.DirectorySeparatorChar) &&
-                       !path.Destination.ElementAt(path.Destination.Length - 1).Equals(System.IO.Path.AltDirectorySeparatorChar))
-                        path.Destination += System.IO.Path.DirectorySeparatorChar;
-
+                    path.Source = AddDirectorySeperator(path.Source);
+                    path.Destination = AddDirectorySeperator(path.Destination);
                     changedFiles.AddRange(GetChangedFiles(path));
                 }
-                else if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > DateTime_LastUpdated)
+                else if (File.Exists(path.Source) && File.GetLastWriteTimeUtc(path.Source) > LastUpdated)
                 {
                     changedFiles.Add(path);
                 }
@@ -102,7 +78,7 @@ namespace GameSaver
 
             foreach (string dir in Directory.GetDirectories(path.Source))
             {
-                changedFiles.AddRange(GetChangedFiles(new Path(dir, path.Destination + GetRelativePath(path.Source, dir))));
+                changedFiles.AddRange(GetChangedFiles(new Path(AddDirectorySeperator(dir), path.Destination + GetRelativePath(path.Source, AddDirectorySeperator(dir)))));
             }
 
             foreach (string file in Directory.GetFiles(path.Source))
@@ -133,7 +109,7 @@ namespace GameSaver
         /// <exception cref="ArgumentNullException"><paramref name="fromPath"/> or <paramref name="toPath"/> is <c>null</c>.</exception>
         /// <exception cref="UriFormatException"></exception>
         /// <exception cref="InvalidOperationException"></exception>
-        public static string GetRelativePath(string fromPath, string toPath)
+        protected static string GetRelativePath(string fromPath, string toPath)
         {
             if (string.IsNullOrEmpty(fromPath))
             {
@@ -145,8 +121,8 @@ namespace GameSaver
                 throw new ArgumentNullException(nameof(toPath));
             }
 
-            Uri fromUri = new Uri(AppendDirectorySeparatorChar(fromPath));
-            Uri toUri = new Uri(AppendDirectorySeparatorChar(toPath));
+            Uri fromUri = new Uri(fromPath);
+            Uri toUri = new Uri(toPath);
 
             if (fromUri.Scheme != toUri.Scheme)
             {
@@ -164,16 +140,12 @@ namespace GameSaver
             return relativePath;
         }
 
-        protected static string AppendDirectorySeparatorChar(string path)
+        protected static string AddDirectorySeperator(string input)
         {
-            // Append a slash only if the path is a directory and does not have a slash.
-            if (!System.IO.Path.HasExtension(path) &&
-                !path.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
-            {
-                return path + System.IO.Path.DirectorySeparatorChar;
-            }
-
-            return path;
+            if (!input.ElementAt(input.Length - 1).Equals(System.IO.Path.DirectorySeparatorChar) &&
+                       !input.ElementAt(input.Length - 1).Equals(System.IO.Path.AltDirectorySeparatorChar))
+                return input + System.IO.Path.DirectorySeparatorChar;
+            return input;
         }
     }
 }
