@@ -7,7 +7,7 @@ Config must be placed next to the executable and must be named 'config.json'.
 {
   "Locations": [
     {
-      "Name": "TransportFever",
+      "Name": ">>This location deserves a name<<",
       "Paths": [
         {
           "Source": ">>Full path to source directory or file to copy<<",
