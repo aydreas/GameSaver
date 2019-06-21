@@ -10,18 +10,18 @@ Config must be placed next to the executable and must be named 'config.json'.
       "Name": "TransportFever",
       "Paths": [
         {
-          "Source": "C:\\Users\\Andreas\\Desktop\\src\\",
-          "Destination": "C:\\Users\\Andreas\\Desktop\\srcc\\",
-          "RegEx": "^setup.*$"
+          "Source": ">>Full path to source directory or file to copy<<",
+          "Destination": ">>Full path to destination, where the contents should be copied to<<",
+          "RegEx": ">>Regex expression to filter files or leave empty to copy every file<<"
         }
       ],
       "AssociatedProcess": {
-        "ProcessName": "putty"
+        "ProcessName": ">>process name of eg. the game without extension, so the files won't be copied when the game is running<<"
       },
-      "LastUpdated": "2019-06-21T18:50:27.1283765Z"
+      "LastUpdated": ""
     }
   ],
-  "RefreshInterval": 1000
+  "RefreshInterval": 10000
 }
 ```
 
