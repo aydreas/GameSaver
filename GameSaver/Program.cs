@@ -28,12 +28,12 @@ namespace GameSaver
                         continue;
 
                     Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("[{0}] Detected changes, updating {1} files..", l.Name, changedFiles.Length);
+                    Console.WriteLine("[{0}][{1}] Detected changes, updating {2} files..", DateTime.Now.ToLongTimeString(), l.Name, changedFiles.Length);
                     Console.ResetColor();
 
                     foreach (Location.Path path in changedFiles)
                     {
-                        Console.Write("[{0}] copying file: '{1}'..", l.Name, path.Source);
+                        Console.Write("[{0}][{1}] copying file: '{2}'..", DateTime.Now.ToLongTimeString(), l.Name, path.Source);
 
                         try
                         {
