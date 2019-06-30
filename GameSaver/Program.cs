@@ -63,9 +63,6 @@ namespace GameSaver
 
         static void CopyFile(string source, string dest)
         {
-            if (!File.Exists(source))
-                return;
-
             ICollection<string> directoriesToAdd = new List<string>();
             for(string p = Path.GetDirectoryName(dest); !Directory.Exists(p); p = Path.GetDirectoryName(p))
             {
